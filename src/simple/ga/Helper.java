@@ -5,6 +5,9 @@
  */
 package simple.ga;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -26,7 +29,44 @@ public class Helper {
         this.mutationRate = mutationRate;
         r = new Random();
     }
+    
+    public Helper(double mutationRate) {
+        this.mutationRate = mutationRate;
+    }
 
+    public Population getDataListFromFile(String fileName) {
+        Population dataSet = new Population();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+
+            String currentLine;
+            String[] splitLine;
+
+            while ((currentLine = br.readLine()) != null) {
+                splitLine = currentLine.split("\\s+");
+
+                if (splitLine.length > 2) {
+                    P = Integer.parseInt(splitLine[0]);
+                    N = Integer.parseInt(splitLine[3]);
+                } else {
+                    dataSet.addIndividual(new Individual(splitLine[0], splitLine[1], N));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Exception reading file...");
+            return null;
+        }
+
+        if (dataSet.getPopulation().size() != P) {
+            System.out.println("Error reading file, incorrect row amount...");
+            return null;
+        }
+
+        
+        
+        return dataSet;
+    }
+    
     public Population tournamentSelection(Population population) {
         Population offspring = new Population();
 
@@ -105,5 +145,13 @@ public class Helper {
         children.add(new Individual(child2Genes, N));
 
         return children;
+    }
+    
+    public int getP() {
+        return P;
+    }
+    
+    public int getN() {
+        return N;
     }
 }

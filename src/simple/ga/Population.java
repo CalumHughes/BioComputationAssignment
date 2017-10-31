@@ -38,7 +38,6 @@ public class Population {
 
     public int calculateTotalFitnessOfPopulation() {
         int totalFitness = 0;
-
         for (Individual i : population) {
             totalFitness += i.getFitness();
         }

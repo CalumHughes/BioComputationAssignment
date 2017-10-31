@@ -5,6 +5,11 @@
  */
 package simple.ga;
 
+<<<<<<< HEAD
+=======
+import java.util.List;
+>>>>>>> parent of 0c5b274... Nearly converted
+
 
 /**
  *
@@ -12,6 +17,8 @@ package simple.ga;
  */
 public class SimpleGA {
 
+    private static final String FILE_NAME = "res/data1.txt";
+    
     private static final int generations = 100;
 
     private static final int N = 100;
@@ -19,7 +26,11 @@ public class SimpleGA {
     private static final int P = 100;
 
     private static double mutationRate;
+    
+    private static List<Population> ruleSets;
 
+    private static Population dataSet;
+    
     private static Population population;
 
     private static Population offspring;
@@ -39,6 +50,16 @@ public class SimpleGA {
         population.calculateTotalFitnessOfPopulation();
 
         population.printGeneration(generation);
+        dataSet = helper.getDataListFromFile(FILE_NAME);
+        
+        population = new Population(P, N);
+        
+        int totalFitness = population.calculateTotalFitnessOfPopulation(dataSet);
+
+        population.printRules();
+        
+        
+        //population.printGeneration(generation);
         
         while (generation != generations) {
             generation++;
