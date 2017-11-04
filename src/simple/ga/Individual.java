@@ -5,6 +5,9 @@
  */
 package simple.ga;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -12,54 +15,106 @@ import java.util.Random;
  * @author c38-hughes
  */
 public class Individual {
+
     private Random r = new Random();
-    
+
     private int genes[];
-    
-    private int fitness;
-    
+
     private int n;
     
-    public Individual(int n) {
-        genes = new int[n];
+    private int p;
+
+    private int fitness;
+
+    public Individual(int p, int n) {
+        this.p = p;
+        this.n = n;
         
-        for(int i = 0; i < n; i++) {
-            
+        genes = new int[p * n];
+
+        for (int i = 0; i < genes.length; i++) {
             int randValue = r.nextInt(2);
             genes[i] = randValue;
-            
-            if(randValue == 1) {
-                fitness++;
-            }
         }
-        
         this.n = n;
     }
-    
-    public Individual(int genes[], int n) {
-        this.genes = genes;
 
-        for(int i : genes) {
-            if(i == 1) {
-                fitness++;
-            }
-        }
-        
-        if(genes.length != n) {
-            System.out.println("Incorrect amount of Genes...");
-        }
-        
+    public Individual(int[] genes, int n) {
         this.n = n;
+        this.p = genes.length / n;
+        this.genes = genes;
     }
-    
+
+    public Individual(String genes, int n, int p) {
+        this.n = n;
+        this.p = p;
+        this.genes = new int[genes.length()];
+
+        for (int i = 0; i < genes.length(); i++) {
+            this.genes[i] = Character.getNumericValue(genes.charAt(i));
+        }
+    }
+
     public void mutateGenes(double mutationRate) {
-        for(int i = 0; i < genes.length; i++) {
+        for (int i = 0; i < genes.length; i++) {
             Double d = r.nextDouble();
             if (d < mutationRate) {
                 genes[i] = 1 - i;
             }
         }
+    }
+
+    public void calculateFitness(Individual dataSet) {
+        int totalFitness = 0;
+        List<String> data = dataSet.getRuleList();
+        Iterator it = data.iterator();
+        List<String> population = getRuleList();
         
+        while (it.hasNext()) {
+            String rule = (String) it.next();
+
+            for (String s : population) {
+                if (checkRule(rule, s)) {
+                    totalFitness++;
+                    break;
+                }
+            }
+        }
+
+        setFitness(totalFitness);
+    }
+    
+    private boolean checkRule(String r1, String r2) {
+        for(int i = 0; i < n; i++) {
+            if(r1.charAt(i) != r2.charAt(i)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    public List<String> getRuleList() {
+        return getGenes(printGenes());
+    }
+
+    public ArrayList<String> getGenes(String geneString) {
+        ArrayList<String> genes = new ArrayList<>();
+        int startIndex = 0;
+        int endIndex = n;
+        
+
+        for (int i = 0; i <= geneString.length() / n; i++) {
+            if (endIndex > geneString.length()) {
+                break;
+            }
+
+            genes.add(geneString.substring(startIndex, endIndex));
+            startIndex = endIndex;
+            endIndex += n;
+        }
+
+        return genes;
     }
 
     public int getFitness() {
@@ -77,7 +132,7 @@ public class Individual {
     public void setGenes(int[] genes) {
         this.genes = genes;
     }
-    
+
     public int getN() {
         return n;
     }
@@ -85,24 +140,31 @@ public class Individual {
     public void setN(int n) {
         this.n = n;
     }
+    
+    public int getP() {
+        return p;
+    }
+
+    public void setP(int p) {
+        this.p = p;
+    }
 
     public String printGenes() {
-       String genes = "";
-       
-       for(int i : getGenes()) {
-           genes += i;
-       }
-       
-       return genes;
-    }
+        String genes = "";
 
+        for (int i : getGenes()) {
+            genes += i;
+        }
+
+        return genes;
+    }
 
     public Individual copy() {
-        return new Individual(getGenes(), getN());
+        return new Individual(printGenes(), getN(), getP());
     }
-    
+
     @Override
     public String toString() {
-        return "Individual{" + "genes=" + printGenes() + ", fitness=" + fitness + '}';
+        return "Individual{" + "genes=" + getGenes() + ", fitness=" + fitness + '}';
     }
 }

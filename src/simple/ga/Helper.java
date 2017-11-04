@@ -21,6 +21,7 @@ public class Helper {
     private int P;
     private int N;
     private double mutationRate;
+    private Individual dataSet;
     private Random r;
 
     public Helper(int p, int n, double mutationRate) {
@@ -29,27 +30,27 @@ public class Helper {
         this.mutationRate = mutationRate;
         r = new Random();
     }
-    
-    public Helper(double mutationRate) {
-        this.mutationRate = mutationRate;
+
+    public Helper() {
+        r = new Random();
     }
 
-    public Population getDataListFromFile(String fileName) {
-        Population dataSet = new Population();
+    public Individual getIndividualFromFile(String fileName) {
+
+        String genes = "";
 
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 
             String currentLine;
             String[] splitLine;
-
             while ((currentLine = br.readLine()) != null) {
                 splitLine = currentLine.split("\\s+");
 
                 if (splitLine.length > 2) {
                     P = Integer.parseInt(splitLine[0]);
-                    N = Integer.parseInt(splitLine[3]);
+                    N = Integer.parseInt(splitLine[3]) + 1;
                 } else {
-                    dataSet.addIndividual(new Individual(splitLine[0], splitLine[1], N));
+                    genes = genes.concat(splitLine[0].concat(splitLine[1]));
                 }
             }
         } catch (IOException e) {
@@ -57,22 +58,17 @@ public class Helper {
             return null;
         }
 
-        if (dataSet.getPopulation().size() != P) {
-            System.out.println("Error reading file, incorrect row amount...");
-            return null;
-        }
-
-        
-        
+        this.dataSet = new Individual(genes, N, P);
         return dataSet;
     }
-    
-    public Population tournamentSelection(Population population) {
-        Population offspring = new Population();
 
-        for (int i = 0; i <= P; i++) {
-            Individual parent1 = population.getIndividual(r.nextInt(P));
-            Individual parent2 = population.getIndividual(r.nextInt(P));
+    public Population tournamentSelection(Population population) {
+        Population offspring = new Population(dataSet);
+        int p = population.getPopulation().size();
+
+        for (int i = 0; i < p; i++) {
+            Individual parent1 = population.getIndividual(r.nextInt(p));
+            Individual parent2 = population.getIndividual(r.nextInt(p));
 
             if (parent1.getFitness() >= parent2.getFitness()) {
                 offspring.addIndividual(parent1.copy());
@@ -81,50 +77,52 @@ public class Helper {
             }
         }
 
+        offspring.calculateTotalFitnessOfPopulation();
         return offspring;
     }
 
+
     public Population bitwiseMutation(Population population) {
-        Population mutatedOffspring = new Population();
+        Population mutatedOffspring = new Population(dataSet);
 
         for (Individual i : population.getPopulation()) {
-            mutatedOffspring.addIndividual(mutateGenes(i.getGenes()));
-//            mutatedOffspring.printGeneration(1);
+            mutatedOffspring.addIndividual(mutateGenes(i.getGenes(), N));
         }
 
+        mutatedOffspring.calculateTotalFitnessOfPopulation();
         return mutatedOffspring;
     }
 
-    public Individual mutateGenes(int[] genes) {
-        int[] mutatedGenes = new int[N];
+    public Individual mutateGenes(int[] genes, int n) {
+        int[] mutatedGenes = new int[genes.length];
         int index = 0;
 
         for (int i : genes) {
             Double d = r.nextDouble();
             if (d < mutationRate) {
                 mutatedGenes[index] = 1 - i;
-                
             } else {
                 mutatedGenes[index] = i;
             }
             index++;
         }
 
-        return new Individual(mutatedGenes, N);
+        return new Individual(mutatedGenes, n);
     }
 
     public Population singlePointCrossover(Population population) {
-        Population mutatedPopulation = new Population();
+        Population mutatedPopulation = new Population(dataSet);
 
         for (int i = 0; i < P; i++) {
-            if (i != population.getPopulation().size() - 1) {
+            if (!(i >= population.getPopulation().size() - 1)) {
                 Individual parent1 = population.getIndividual(i);
                 Individual parent2 = population.getIndividual(i + 1);
-                mutatedPopulation.getPopulation().addAll(performCrossover(r.nextInt(N), parent1.getGenes(), parent2.getGenes()));
+                mutatedPopulation.getPopulation().addAll(performCrossover(r.nextInt(parent1.getGenes().length), parent1.getGenes(), parent2.getGenes()));
                 i++;
             }
         }
 
+        mutatedPopulation.calculateTotalFitnessOfPopulation();
         return mutatedPopulation;
     }
 
@@ -135,7 +133,7 @@ public class Helper {
         int[] child1Genes = genesP1;
         int[] child2Genes = genesP2;
 
-        for (int i = crossoverPoint; i < N; i++) {
+        for (int i = crossoverPoint; i < genesP1.length; i++) {
             int tempGene = child1Genes[i];
             child1Genes[i] = child2Genes[i];
             child2Genes[i] = tempGene;
@@ -146,12 +144,16 @@ public class Helper {
 
         return children;
     }
-    
+
     public int getP() {
         return P;
     }
-    
+
     public int getN() {
         return N;
+    }
+
+    public void setMutationRate(double mutationRate) {
+        this.mutationRate = mutationRate;
     }
 }
