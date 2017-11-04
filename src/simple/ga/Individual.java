@@ -6,6 +6,7 @@
 package simple.ga;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -20,33 +21,34 @@ public class Individual {
 
     private int genes[];
 
-    private int n;
-    
+    private int ruleLength;
+
     private int p;
 
     private int fitness;
 
-    public Individual(int p, int n) {
+    public Individual(int p, int ruleLength) {
         this.p = p;
-        this.n = n;
-        
-        genes = new int[p * n];
+        this.ruleLength = ruleLength;
+        genes = new int[p * ruleLength];
 
         for (int i = 0; i < genes.length; i++) {
+//            int maxRand = isOutputBit(i) ? 2 : 3;
+//            int randValue = r.nextInt(maxRand);
             int randValue = r.nextInt(2);
             genes[i] = randValue;
         }
-        this.n = n;
+        this.ruleLength = ruleLength;
     }
 
-    public Individual(int[] genes, int n) {
-        this.n = n;
-        this.p = genes.length / n;
+    public Individual(int[] genes, int ruleLength) {
+        this.ruleLength = ruleLength;
+        this.p = genes.length / ruleLength;
         this.genes = genes;
     }
 
-    public Individual(String genes, int n, int p) {
-        this.n = n;
+    public Individual(String genes, int ruleLength, int p) {
+        this.ruleLength = ruleLength;
         this.p = p;
         this.genes = new int[genes.length()];
 
@@ -55,27 +57,19 @@ public class Individual {
         }
     }
 
-    public void mutateGenes(double mutationRate) {
-        for (int i = 0; i < genes.length; i++) {
-            Double d = r.nextDouble();
-            if (d < mutationRate) {
-                genes[i] = 1 - i;
-            }
-        }
-    }
-
     public void calculateFitness(Individual dataSet) {
         int totalFitness = 0;
         List<String> data = dataSet.getRuleList();
         Iterator it = data.iterator();
         List<String> population = getRuleList();
-        
+
         while (it.hasNext()) {
             String rule = (String) it.next();
-
             for (String s : population) {
-                if (checkRule(rule, s)) {
-                    totalFitness++;
+                if (checkInput(rule, s)) {
+                    if (checkOutput(rule, s)) {
+                        totalFitness++;
+                    }
                     break;
                 }
             }
@@ -83,15 +77,19 @@ public class Individual {
 
         setFitness(totalFitness);
     }
-    
-    private boolean checkRule(String r1, String r2) {
-        for(int i = 0; i < n; i++) {
-            if(r1.charAt(i) != r2.charAt(i)) {
+
+    private boolean checkInput(String r1, String r2) {
+        for (int i = 0; i < ruleLength - 1; i++) {
+            if (r2.charAt(i) != 2 && r1.charAt(i) != r2.charAt(i)) {
                 return false;
             }
         }
-        
+
         return true;
+    }
+    
+    private boolean checkOutput(String r1, String r2) {
+        return r1.charAt(ruleLength - 1) == r2.charAt(ruleLength - 1);
     }
 
     public List<String> getRuleList() {
@@ -101,17 +99,16 @@ public class Individual {
     public ArrayList<String> getGenes(String geneString) {
         ArrayList<String> genes = new ArrayList<>();
         int startIndex = 0;
-        int endIndex = n;
-        
+        int endIndex = ruleLength;
 
-        for (int i = 0; i <= geneString.length() / n; i++) {
+        for (int i = 0; i <= geneString.length() / ruleLength; i++) {
             if (endIndex > geneString.length()) {
                 break;
             }
 
             genes.add(geneString.substring(startIndex, endIndex));
             startIndex = endIndex;
-            endIndex += n;
+            endIndex += ruleLength;
         }
 
         return genes;
@@ -133,14 +130,14 @@ public class Individual {
         this.genes = genes;
     }
 
-    public int getN() {
-        return n;
+    public int getRuleLength() {
+        return ruleLength;
     }
 
-    public void setN(int n) {
-        this.n = n;
+    public void setRuleLength(int ruleLength) {
+        this.ruleLength = ruleLength;
     }
-    
+
     public int getP() {
         return p;
     }
@@ -159,12 +156,16 @@ public class Individual {
         return genes;
     }
 
+    public boolean isOutputBit(int i) {
+        return i != 0 && i % (ruleLength - 1) == 0;
+    }
+
     public Individual copy() {
-        return new Individual(printGenes(), getN(), getP());
+        return new Individual(printGenes(), getRuleLength(), getP());
     }
 
     @Override
     public String toString() {
-        return "Individual{" + "genes=" + getGenes() + ", fitness=" + fitness + '}';
+        return "Individual{" + "genes=" + Arrays.toString(getGenes()) + ", fitness=" + fitness + '}';
     }
 }

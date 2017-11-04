@@ -5,8 +5,6 @@
  */
 package simple.ga;
 
-import java.util.List;
-
 /**
  *
  * @author c38-hughes
@@ -15,9 +13,9 @@ public class SimpleGA {
 
     private static final String FILE_NAME = "res/data1.txt";
 
-    private static final int generations = 100;
+    private static final int GENS = 100;
 
-    private static int n;
+    private static int ruleLength;
 
     private static final int P = 10;
 
@@ -39,31 +37,28 @@ public class SimpleGA {
     public static void main(String[] args) {
         int generation = 0;
 
-        helper = new Helper();
+        helper = new Helper(P);
         dataSet = helper.getIndividualFromFile(FILE_NAME);
 
-        n = helper.getN();
-        mutationRate = 1.0f / n;
+        ruleLength = helper.getRuleLength();
+        mutationRate = 1.0f / (helper.getRuleLength() * helper.getP());
         helper.setMutationRate(mutationRate);
 
-        population = new Population(P, n, dataSet);
+        population = new Population(P, ruleLength, dataSet);
 
         population.printGeneration(generation);
 
-        while (generation != generations) {
+        while (generation != GENS) {
             generation++;
             best = population.getHighestFitnessIndividual();
             offspring = helper.tournamentSelection(population);
             offspring = helper.singlePointCrossover(offspring);
-            offspring.replaceWorstIndividual(best);
             offspring = helper.bitwiseMutation(offspring);
             offspring.replaceWorstIndividual(best);
             
             population = offspring.copy();
-            population.replaceWorstIndividual(best);
             population.printGeneration(generation);
             offspring = new Population(dataSet);
-
         }
     }
 
