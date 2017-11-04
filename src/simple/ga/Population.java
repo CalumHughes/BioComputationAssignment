@@ -17,29 +17,35 @@ public class Population {
     private List<Individual> population;
 
     private int averageFitness;
+    
+    private Individual dataSet;
 
-    public Population() {
+
+    public Population(Individual dataSet) {
+        this.dataSet = dataSet;
         this.population = new ArrayList<>();
     }
 
-    public Population(List<Individual> population) {
+    public Population(List<Individual> population, Individual dataSet) {
+        this.dataSet = dataSet;
         this.population = population;
-        getAverageFitness();
     }
 
-    public Population(int p, int n) {
+    public Population(int p, int n, Individual dataSet) {
+        this.dataSet = dataSet;
         this.population = new ArrayList<>();
 
         for (int i = 0; i < p; i++) {
-            population.add(new Individual(n));
+            Individual newIndividual = new Individual(p, n);
+            newIndividual.calculateFitness(dataSet);
+            population.add(newIndividual);
         }
-        getAverageFitness();
     }
 
     public int calculateTotalFitnessOfPopulation() {
         int totalFitness = 0;
-
         for (Individual i : population) {
+            i.calculateFitness(dataSet);
             totalFitness += i.getFitness();
         }
 
@@ -78,6 +84,7 @@ public class Population {
         int average = 0;
 
         for (Individual i : population) {
+            i.calculateFitness(dataSet);
             average += i.getFitness();
         }
 
@@ -90,7 +97,7 @@ public class Population {
         Individual worst = getLowestFitnessIndividual();
 
         if (worst.getFitness() < replacement.getFitness()) {
-            getPopulation().remove(getLowestFitnessIndividual());
+            getPopulation().remove(worst);
             addIndividual(replacement);
         }
     }
@@ -100,7 +107,7 @@ public class Population {
     }
 
     public Population copy() {
-        Population copy = new Population();
+        Population copy = new Population(dataSet);
 
         for (Individual i : this.population) {
             copy.addIndividual(i.copy());
@@ -124,5 +131,4 @@ public class Population {
     public void setPopulation(List<Individual> population) {
         this.population = population;
     }
-
 }

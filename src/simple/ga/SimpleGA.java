@@ -5,6 +5,7 @@
  */
 package simple.ga;
 
+import java.util.List;
 
 /**
  *
@@ -12,49 +13,58 @@ package simple.ga;
  */
 public class SimpleGA {
 
+    private static final String FILE_NAME = "res/data1.txt";
+
     private static final int generations = 100;
 
-    private static final int N = 100;
+    private static int n;
 
-    private static final int P = 100;
+    private static final int P = 10;
 
     private static double mutationRate;
+
+    private static Individual dataSet;
+    
+    private static Individual best;
 
     private static Population population;
 
     private static Population offspring;
 
     private static Helper helper;
-    
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         int generation = 0;
-        mutationRate = 1.0f / N;
 
-        population = new Population(P, N);
-        helper = new Helper(P, N, mutationRate);
-        
-        population.calculateTotalFitnessOfPopulation();
+        helper = new Helper();
+        dataSet = helper.getIndividualFromFile(FILE_NAME);
+
+        n = helper.getN();
+        mutationRate = 1.0f / n;
+        helper.setMutationRate(mutationRate);
+
+        population = new Population(P, n, dataSet);
 
         population.printGeneration(generation);
-        
+
         while (generation != generations) {
             generation++;
-            Individual best = population.getHighestFitnessIndividual();
+            best = population.getHighestFitnessIndividual();
             offspring = helper.tournamentSelection(population);
             offspring = helper.singlePointCrossover(offspring);
+            offspring.replaceWorstIndividual(best);
             offspring = helper.bitwiseMutation(offspring);
-            population = offspring;
-            population.replaceWorstIndividual(best);
-            offspring.printGeneration(generation);
-            offspring = new Population();
+            offspring.replaceWorstIndividual(best);
             
-        }
+            population = offspring.copy();
+            population.replaceWorstIndividual(best);
+            population.printGeneration(generation);
+            offspring = new Population(dataSet);
 
-        //printPopulation(population);
+        }
     }
 
-  
 }
