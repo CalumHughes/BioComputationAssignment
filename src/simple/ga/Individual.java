@@ -6,7 +6,6 @@
 package simple.ga;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -23,34 +22,33 @@ public class Individual {
 
     private int ruleLength;
 
-    private int p;
+    private final int ruleCount;
 
     private int fitness;
 
-    public Individual(int p, int ruleLength) {
-        this.p = p;
+    public Individual(int ruleCount, int ruleLength) {
+        this.ruleCount = ruleCount;
         this.ruleLength = ruleLength;
-        genes = new int[p * ruleLength];
+        genes = new int[ruleCount * ruleLength];
 
         for (int i = 0; i < genes.length; i++) {
-//            int maxRand = isOutputBit(i) ? 2 : 3;
-//            int randValue = r.nextInt(maxRand);
-            int randValue = r.nextInt(2);
+            int maxRand = isOutputBit(i) ? 2 : 3;
+            int randValue = r.nextInt(maxRand);
             genes[i] = randValue;
         }
-        this.ruleLength = ruleLength;
     }
 
-    public Individual(int[] genes, int ruleLength) {
+    public Individual(int[] genes, int ruleLength, int ruleCount) {
         this.ruleLength = ruleLength;
-        this.p = genes.length / ruleLength;
+        this.ruleCount = ruleCount;
         this.genes = genes;
     }
 
-    public Individual(String genes, int ruleLength, int p) {
+    public Individual(String genes, int ruleLength, int ruleCount, int fitness) {
         this.ruleLength = ruleLength;
-        this.p = p;
+        this.ruleCount = ruleCount;
         this.genes = new int[genes.length()];
+        this.fitness = fitness;
 
         for (int i = 0; i < genes.length(); i++) {
             this.genes[i] = Character.getNumericValue(genes.charAt(i));
@@ -61,7 +59,7 @@ public class Individual {
         int totalFitness = 0;
         List<String> data = dataSet.getRuleList();
         Iterator it = data.iterator();
-        List<String> population = getRuleList();
+        List<String> population = Individual.this.getRuleList();
 
         while (it.hasNext()) {
             String rule = (String) it.next();
@@ -80,23 +78,23 @@ public class Individual {
 
     private boolean checkInput(String r1, String r2) {
         for (int i = 0; i < ruleLength - 1; i++) {
-            if (r2.charAt(i) != 2 && r1.charAt(i) != r2.charAt(i)) {
+            if (r2.charAt(i) != '2' && r1.charAt(i) != r2.charAt(i)) {
                 return false;
             }
         }
 
         return true;
     }
-    
+
     private boolean checkOutput(String r1, String r2) {
         return r1.charAt(ruleLength - 1) == r2.charAt(ruleLength - 1);
     }
 
     public List<String> getRuleList() {
-        return getGenes(printGenes());
+        return getRuleList(printGenes());
     }
 
-    public ArrayList<String> getGenes(String geneString) {
+    public ArrayList<String> getRuleList(String geneString) {
         ArrayList<String> genes = new ArrayList<>();
         int startIndex = 0;
         int endIndex = ruleLength;
@@ -138,12 +136,8 @@ public class Individual {
         this.ruleLength = ruleLength;
     }
 
-    public int getP() {
-        return p;
-    }
-
-    public void setP(int p) {
-        this.p = p;
+    public int getRuleCount() {
+        return ruleCount;
     }
 
     public String printGenes() {
@@ -157,15 +151,24 @@ public class Individual {
     }
 
     public boolean isOutputBit(int i) {
-        return i != 0 && i % (ruleLength - 1) == 0;
+        if(i < ruleLength) {
+            return i % (ruleLength - 1) == 0;
+        }
+        return (i + 1) % ruleLength == 0;
     }
 
     public Individual copy() {
-        return new Individual(printGenes(), getRuleLength(), getP());
+        return new Individual(printGenes(), getRuleLength(), getRuleCount(), getFitness());
     }
 
     @Override
     public String toString() {
-        return "Individual{" + "genes=" + Arrays.toString(getGenes()) + ", fitness=" + fitness + '}';
+        StringBuilder s = new StringBuilder("\nIndividual Fitness = " + fitness);
+        s.append("\nRules:\n");
+        for(String rule : getRuleList()) {
+           s.append(rule.substring(0, ruleLength - 1)).append(" ").append(rule.substring(ruleLength - 1)).append("\n");
+        }
+        
+        return s.toString();
     }
 }
