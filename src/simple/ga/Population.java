@@ -17,9 +17,8 @@ public class Population {
     private List<Individual> population;
 
     private int averageFitness;
-    
-    private Individual dataSet;
 
+    private Individual dataSet;
 
     public Population(Individual dataSet) {
         this.dataSet = dataSet;
@@ -31,14 +30,24 @@ public class Population {
         this.population = population;
     }
 
-    public Population(int p, int n, Individual dataSet) {
+    public Population(int p, int ruleCount, int ruleLength, Individual dataSet) {
         this.dataSet = dataSet;
         this.population = new ArrayList<>();
 
         for (int i = 0; i < p; i++) {
-            Individual newIndividual = new Individual(p, n);
+            Individual newIndividual = new Individual(ruleCount, ruleLength);
             newIndividual.calculateFitness(dataSet);
             population.add(newIndividual);
+        }
+    }
+    
+    public void printBest() {
+        Individual i = getHighestFitnessIndividual();
+        int ruleLength = i.getRuleLength();
+        System.out.println();
+        System.out.println("Fitness: " + i.getFitness());
+        for(String s : i.getRuleList()) {
+            System.out.println(s.substring(0, ruleLength - 1) + " " + s.substring(ruleLength - 1));
         }
     }
 
@@ -48,7 +57,6 @@ public class Population {
             i.calculateFitness(dataSet);
             totalFitness += i.getFitness();
         }
-
         return totalFitness;
     }
 
@@ -130,5 +138,14 @@ public class Population {
 
     public void setPopulation(List<Individual> population) {
         this.population = population;
+    }
+
+    @Override
+    public String toString() {
+        String s = "";
+        for(Individual i : population) {
+            s += i.getFitness() + " - ";
+        }
+        return s;
     }
 }
