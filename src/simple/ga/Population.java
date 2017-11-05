@@ -46,8 +46,8 @@ public class Population {
         int ruleLength = i.getRuleLength();
         System.out.println();
         System.out.println("Fitness: " + i.getFitness());
-        for(String s : i.getRuleList()) {
-            System.out.println(s.substring(0, ruleLength - 1) + " " + s.substring(ruleLength - 1));
+        for(Rule s : i.getRuleList()) {
+            System.out.println(s.toString());
         }
     }
 

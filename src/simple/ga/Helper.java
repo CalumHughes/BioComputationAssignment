@@ -34,7 +34,8 @@ public class Helper {
 
     public Individual getIndividualFromFile(String fileName) {
         int rCount = 0;
-        String genes = "";
+        double[] genes = new double[0];
+        int index = 0;
 
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 
@@ -43,11 +44,15 @@ public class Helper {
             while ((currentLine = br.readLine()) != null) {
                 splitLine = currentLine.split("\\s+");
 
-                if (splitLine.length > 2) {
+                if (splitLine.length > 7) {
                     rCount = Integer.parseInt(splitLine[0]);
                     ruleLength = Integer.parseInt(splitLine[3]) + 1;
+                    genes = new double[ruleLength * rCount];
                 } else {
-                    genes = genes.concat(splitLine[0].concat(splitLine[1]));
+                    for(int i = 0; i < ruleLength; i++) {
+                        genes[index] = Double.parseDouble(splitLine[i]);
+                        index++;
+                    }
                 }
             }
         } catch (IOException e) {
@@ -55,7 +60,7 @@ public class Helper {
             return null;
         }
 
-        dataSet = new Individual(genes, ruleLength, rCount, 0);
+        dataSet = new Individual(genes, ruleLength, rCount);
         return dataSet;
     }
 
@@ -90,17 +95,17 @@ public class Helper {
     }
 
     public Individual mutateIndividual(Individual individual) {
-        int[] mutatedGenes = new int[individual.getGenes().length];
+        double[] mutatedGenes = new double[individual.getGenes().length];
         int index = 0;
 
         for (int i = 0; i < individual.getGenes().length; i++) {
             Double d = r.nextDouble();
-            int gene = individual.getGenes()[i];
+            double gene = individual.getGenes()[i];
             if (d < mutationRate) {
                 if (individual.isOutputBit(i)) {
-                    mutatedGenes[index] = 1 - gene;
+//                    mutatedGenes[index] = 1 - gene;
                 } else {
-                    mutatedGenes[index] = inputMutation(gene);
+//                    mutatedGenes[index] = inputMutation(gene);
                 }
             } else {
                 mutatedGenes[index] = gene;
@@ -108,7 +113,8 @@ public class Helper {
             index++;
         }
 
-        return new Individual(mutatedGenes, ruleLength, individual.getRuleCount());
+        return null;
+                //new Individual(mutatedGenes, ruleLength, individual.getRuleCount());
     }
 
     private int inputMutation(int gene) {
@@ -138,21 +144,7 @@ public class Helper {
         return mutatedPopulation;
     }
 
-    public Population multiPointCrossover(Population population) {
-        Population mutatedPopulation = new Population(dataSet);
-
-        for (int i = 0; i < p; i++) {
-            Individual parent1 = population.getIndividual(i);
-            Individual parent2 = population.getIndividual(i + 1);
-            mutatedPopulation.getPopulation().addAll(performCrossover(r.nextInt(ruleCount * ruleLength), -1, parent1.getGenes(), parent2.getGenes()));
-            i++;
-        }
-
-        mutatedPopulation.calculateTotalFitnessOfPopulation();
-        return mutatedPopulation;
-    }
-
-    public List<Individual> performCrossover(int crossoverPoint, int endCrossoverPoint, int genesP1[], int genesP2[]) {
+    public List<Individual> performCrossover(int crossoverPoint, int endCrossoverPoint, double genesP1[], double genesP2[]) {
 
         if(endCrossoverPoint == -1) {
             while (endCrossoverPoint < crossoverPoint) {
@@ -161,11 +153,11 @@ public class Helper {
         }
         List<Individual> children = new ArrayList<>();
 
-        int[] child1Genes = genesP1;
-        int[] child2Genes = genesP2;
+        double[] child1Genes = genesP1;
+        double[] child2Genes = genesP2;
 
         for (int i = crossoverPoint; i < endCrossoverPoint; i++) {
-            int tempGene = child1Genes[i];
+            double tempGene = child1Genes[i];
             child1Genes[i] = child2Genes[i];
             child2Genes[i] = tempGene;
         }

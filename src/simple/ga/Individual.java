@@ -5,8 +5,10 @@
  */
 package simple.ga;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -18,55 +20,48 @@ public class Individual {
 
     private Random r = new Random();
 
-    private int genes[];
+    private double genes[];
 
     private int ruleLength;
 
-    private final int ruleCount;
+    private int ruleCount;
 
     private int fitness;
-
+    
     public Individual(int ruleCount, int ruleLength) {
         this.ruleCount = ruleCount;
         this.ruleLength = ruleLength;
-        genes = new int[ruleCount * ruleLength];
+        genes = new double[ruleCount * ruleLength];
 
         for (int i = 0; i < genes.length; i++) {
-            int maxRand = isOutputBit(i) ? 2 : 3;
-            int randValue = r.nextInt(maxRand);
-            genes[i] = randValue;
+            
+            if (isOutputBit(i)) {
+                genes[i] = r.nextInt(2);
+            } else {
+                genes[i] = r.nextDouble();
+            }
+            
+            genes[i] = round(genes[i]);
+            System.out.println("Bit: " + (i + 1) + " - " + genes[i]);
         }
     }
 
-    public Individual(int[] genes, int ruleLength, int ruleCount) {
+    public Individual(double[] genes, int ruleLength, int ruleCount) {
         this.ruleLength = ruleLength;
         this.ruleCount = ruleCount;
         this.genes = genes;
     }
 
-    public Individual(String genes, int ruleLength, int ruleCount, int fitness) {
-        this.ruleLength = ruleLength;
-        this.ruleCount = ruleCount;
-        this.genes = new int[genes.length()];
-        this.fitness = fitness;
-
-        for (int i = 0; i < genes.length(); i++) {
-            this.genes[i] = Character.getNumericValue(genes.charAt(i));
-        }
-    }
-
     public void calculateFitness(Individual dataSet) {
         int totalFitness = 0;
-        List<String> data = dataSet.getRuleList();
-        Iterator it = data.iterator();
-        List<String> population = Individual.this.getRuleList();
+        List<Rule> data = dataSet.getRuleList();
+        List<Rule> population = this.getRuleList();
 
-        while (it.hasNext()) {
-            String rule = (String) it.next();
-            for (String s : population) {
-                if (checkInput(rule, s)) {
-                    if (checkOutput(rule, s)) {
-                        totalFitness++;
+        for (Rule d : data) {
+            for (Rule r : population) {
+                if (checkInput(d.getInput(), r.getInput())) {
+                    if (d.getOutput() == r.getOutput()) {
+                        fitness++;
                     }
                     break;
                 }
@@ -76,40 +71,45 @@ public class Individual {
         setFitness(totalFitness);
     }
 
-    private boolean checkInput(String r1, String r2) {
-        for (int i = 0; i < ruleLength - 1; i++) {
-            if (r2.charAt(i) != '2' && r1.charAt(i) != r2.charAt(i)) {
+    private boolean checkInput(double[] in1, double[] in2) {
+        int index = 0;
+        for (double d : in1) {
+            if (isInRange(in2[index], in2[index + 1], d)) {
                 return false;
             }
+            index += 2;
         }
-
         return true;
     }
 
-    private boolean checkOutput(String r1, String r2) {
-        return r1.charAt(ruleLength - 1) == r2.charAt(ruleLength - 1);
-    }
-
-    public List<String> getRuleList() {
-        return getRuleList(printGenes());
-    }
-
-    public ArrayList<String> getRuleList(String geneString) {
-        ArrayList<String> genes = new ArrayList<>();
-        int startIndex = 0;
-        int endIndex = ruleLength;
-
-        for (int i = 0; i <= geneString.length() / ruleLength; i++) {
-            if (endIndex > geneString.length()) {
-                break;
-            }
-
-            genes.add(geneString.substring(startIndex, endIndex));
-            startIndex = endIndex;
-            endIndex += ruleLength;
+    private boolean isInRange(double b1, double b2, double input) {
+        if (b1 > b2) {
+            double temp = b2;
+            b2 = b1;
+            b1 = temp;
         }
 
-        return genes;
+        if (input > b1 && input < b2) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public List<Rule> getRuleList() {
+        double[] genes = getGenes();
+        int startIndex = 0;
+        double[] rule = new double[ruleLength];
+
+        List<Rule> rules = new ArrayList<>();
+        for (int i = 0; i < ruleCount; i++) {
+            for (int j = 0; j < ruleLength; i++) {
+                rule[j] = genes[j + startIndex];
+            }
+            rules.add(new Rule(rule));
+            startIndex += ruleLength;
+        }
+        return rules;
     }
 
     public int getFitness() {
@@ -120,11 +120,11 @@ public class Individual {
         this.fitness = fitness;
     }
 
-    public int[] getGenes() {
+    public double[] getGenes() {
         return genes;
     }
 
-    public void setGenes(int[] genes) {
+    public void setGenes(double[] genes) {
         this.genes = genes;
     }
 
@@ -140,35 +140,43 @@ public class Individual {
         return ruleCount;
     }
 
-    public String printGenes() {
-        String genes = "";
-
-        for (int i : getGenes()) {
-            genes += i;
-        }
-
-        return genes;
-    }
-
+//    public String printGenes() {
+//        String genes = "";
+//
+//        for (double i : getGenes()) {
+//            genes += i + " - ";
+//        }
+//
+//        return genes;
+//    }
     public boolean isOutputBit(int i) {
-        if(i < ruleLength) {
+        if (i == 0) {
+            return false;
+        }
+        if (i < ruleLength) {
             return i % (ruleLength - 1) == 0;
         }
         return (i + 1) % ruleLength == 0;
     }
 
     public Individual copy() {
-        return new Individual(printGenes(), getRuleLength(), getRuleCount(), getFitness());
+        Individual i = new Individual(getGenes(), getRuleLength(), getRuleCount());
+        i.setFitness(getFitness());
+        return i;
     }
 
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder("\nIndividual Fitness = " + fitness);
         s.append("\nRules:\n");
-        for(String rule : getRuleList()) {
-           s.append(rule.substring(0, ruleLength - 1)).append(" ").append(rule.substring(ruleLength - 1)).append("\n");
+        for (Rule rule : getRuleList()) {
+            s.append(rule.toString() + "\n");
         }
-        
         return s.toString();
+    }
+
+    public double round(double value) {
+        DecimalFormat df = new DecimalFormat("#.######");
+        return Double.parseDouble(df.format(value));
     }
 }

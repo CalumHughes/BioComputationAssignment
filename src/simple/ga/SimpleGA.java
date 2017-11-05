@@ -11,15 +11,15 @@ package simple.ga;
  */
 public class SimpleGA {
 
-    private static final String FILE_NAME = "res/data2.txt";
+    private static final String FILE_NAME = "res/data3.txt";
 
-    private static final int GENS = 100000;
+    private static final int GENS = 1000;
 
     private static int ruleLength;
 
     private static final int RULE_COUNT = 5;
 
-    private static final int P = 100;
+    private static final int P = 10;
 
     private static double mutationRate;
 
@@ -43,6 +43,9 @@ public class SimpleGA {
         dataSet = helper.getIndividualFromFile(FILE_NAME);
 
         ruleLength = helper.getRuleLength();
+        ruleLength = (ruleLength - 1) * 2;
+        ruleLength++;
+        
         mutationRate = 1.0f / (ruleLength * RULE_COUNT);
         helper.setMutationRate(mutationRate);
         population = new Population(P, RULE_COUNT, ruleLength, dataSet);
