@@ -5,7 +5,10 @@
  */
 package simple.ga;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -16,21 +19,21 @@ public class Population {
 
     private List<Individual> population;
 
-    private int averageFitness;
+    private double averageFitness;
 
-    private Individual dataSet;
+    private List<Rule> dataSet;
 
-    public Population(Individual dataSet) {
+    public Population(List<Rule> dataSet) {
         this.dataSet = dataSet;
         this.population = new ArrayList<>();
     }
 
-    public Population(List<Individual> population, Individual dataSet) {
+    public Population(List<Individual> population, List<Rule> dataSet) {
         this.dataSet = dataSet;
         this.population = population;
     }
 
-    public Population(int p, int ruleCount, int ruleLength, Individual dataSet) {
+    public Population(int p, int ruleCount, int ruleLength, List<Rule> dataSet) {
         this.dataSet = dataSet;
         this.population = new ArrayList<>();
 
@@ -40,13 +43,14 @@ public class Population {
             population.add(newIndividual);
         }
     }
-    
-    public void printBest() {
-        Individual i = getHighestFitnessIndividual();
-        int ruleLength = i.getRuleLength();
+
+    public void printIndividual(Individual i) {
+        if (i == null) {
+            i = getHighestFitnessIndividual();
+        }
         System.out.println();
         System.out.println("Fitness: " + i.getFitness());
-        for(Rule s : i.getRuleList()) {
+        for (Rule s : i.getRuleList(true)) {
             System.out.println(s.toString());
         }
     }
@@ -61,9 +65,8 @@ public class Population {
     }
 
     public Individual getHighestFitnessIndividual() {
-        int maxFitness = 0;
         Individual max = null;
-
+        int maxFitness = 0;
         for (Individual i : population) {
             if (i.getFitness() > maxFitness) {
                 maxFitness = i.getFitness();
@@ -89,11 +92,14 @@ public class Population {
     }
 
     public double getAverageFitness() {
-        int average = 0;
+        double average = 0;
 
         for (Individual i : population) {
-            i.calculateFitness(dataSet);
             average += i.getFitness();
+        }
+
+        if (average == 0.0) {
+            return 0.0;
         }
 
         averageFitness = average / population.size();
@@ -105,13 +111,18 @@ public class Population {
         Individual worst = getLowestFitnessIndividual();
 
         if (worst.getFitness() < replacement.getFitness()) {
-            getPopulation().remove(worst);
-            addIndividual(replacement);
+            List<Individual> p = getPopulation();
+            p.remove(worst);
+            p.add(replacement.copy());
+            setPopulation(p);
         }
     }
 
-    public void printGeneration(int g) {
-        System.out.println("Gen: " + g + " - Average: " + getAverageFitness() + " - Best: " + getHighestFitnessIndividual().getFitness());
+    public void printGeneration(int g, Writer w) throws IOException {
+        String avgFitness = String.valueOf(getAverageFitness());
+        String highestFitness = String.valueOf(getHighestFitnessIndividual().getFitness());
+        CSVUtils.writeLine(w, Arrays.asList(String.valueOf(g), avgFitness, highestFitness));
+        System.out.println("Gen: " + g + " - Average: " + avgFitness + " - Best: " + highestFitness);
     }
 
     public Population copy() {
@@ -143,7 +154,7 @@ public class Population {
     @Override
     public String toString() {
         String s = "";
-        for(Individual i : population) {
+        for (Individual i : population) {
             s += i.getFitness() + " - ";
         }
         return s;
