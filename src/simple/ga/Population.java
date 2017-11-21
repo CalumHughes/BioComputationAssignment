@@ -118,11 +118,11 @@ public class Population {
         }
     }
 
-    public void printGeneration(int g, Writer w) throws IOException {
-        String avgFitness = String.valueOf(getAverageFitness());
-        String highestFitness = String.valueOf(getHighestFitnessIndividual().getFitness());
-        CSVUtils.writeLine(w, Arrays.asList(String.valueOf(g), avgFitness, highestFitness));
-        System.out.println("Gen: " + g + " - Average: " + avgFitness + " - Best: " + highestFitness);
+    public List<String> printGeneration(int g) {
+        String average = String.valueOf(getAverageFitness());
+        String best = String.valueOf(getHighestFitnessIndividual().getFitness());
+        System.out.println("Gen: " + g + " - Average: " + average + " - Best: " + best);
+        return Arrays.asList(String.valueOf(g), average, best);
     }
 
     public Population copy() {
