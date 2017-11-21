@@ -6,6 +6,7 @@
 package simple.ga;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -110,8 +111,11 @@ public class Population {
         }
     }
 
-    public void printGeneration(int g) {
-        System.out.println("Gen: " + g + " - Average: " + getAverageFitness() + " - Best: " + getHighestFitnessIndividual().getFitness());
+    public List<String> printGeneration(int g) {
+        String average = String.valueOf(getAverageFitness());
+        String best = String.valueOf(getHighestFitnessIndividual().getFitness());
+        System.out.println("Gen: " + g + " - Average: " + average + " - Best: " + best);
+        return Arrays.asList(String.valueOf(g), average, best);
     }
 
     public Population copy() {
