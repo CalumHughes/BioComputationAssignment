@@ -8,6 +8,8 @@ package simple.ga;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -22,7 +24,8 @@ public class Helper {
     private int ruleCount;
     private int ruleLength;
     private double mutationRate;
-    private Individual dataSet;
+    private double mutationAmount;
+    private List<Rule> dataSet;
     private Random r;
 
     public Helper(int p, int ruleCount, int ruleLength) {
@@ -32,22 +35,25 @@ public class Helper {
         r = new Random();
     }
 
-    public Individual getIndividualFromFile(String fileName) {
+    public List<Rule> getIndividualFromFile(String fileName) {
         int rCount = 0;
-        String genes = "";
+        double[] genes = null;
+        int index = 0;
 
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 
-            String currentLine;
-            String[] splitLine;
+            String currentLine = br.readLine();
+            String[] splitLine = currentLine.split("\\s+");
+            rCount = Integer.parseInt(splitLine[0]);
+            ruleLength = Integer.parseInt(splitLine[3]) + 1;
+            genes = new double[ruleLength * rCount];
+
             while ((currentLine = br.readLine()) != null) {
                 splitLine = currentLine.split("\\s+");
 
-                if (splitLine.length > 2) {
-                    rCount = Integer.parseInt(splitLine[0]);
-                    ruleLength = Integer.parseInt(splitLine[3]) + 1;
-                } else {
-                    genes = genes.concat(splitLine[0].concat(splitLine[1]));
+                for (int i = 0; i < ruleLength; i++) {
+                    genes[index] = Double.parseDouble(splitLine[i]);
+                    index++;
                 }
             }
         } catch (IOException e) {
@@ -55,7 +61,7 @@ public class Helper {
             return null;
         }
 
-        dataSet = new Individual(genes, ruleLength, rCount, 0);
+        dataSet = new Individual(genes, ruleLength, rCount).getRuleList(false);
         return dataSet;
     }
 
@@ -63,7 +69,7 @@ public class Helper {
         Population offspring = new Population(dataSet);
         int p = population.getPopulation().size();
 
-        for (int i = 1; i <= p; i++) {
+        for (int i = 0; i < p; i++) {
             Individual parent1 = population.getIndividual(r.nextInt(p));
             Individual parent2 = population.getIndividual(r.nextInt(p));
 
@@ -90,47 +96,54 @@ public class Helper {
     }
 
     public Individual mutateIndividual(Individual individual) {
-        int[] mutatedGenes = new int[individual.getGenes().length];
+        double[] mutatedGenes = new double[individual.getGenes().length];
         int index = 0;
 
-        for (int i = 0; i < individual.getGenes().length; i++) {
-            Double d = r.nextDouble();
-            int gene = individual.getGenes()[i];
-            if (d < mutationRate) {
-                if (individual.isOutputBit(i)) {
-                    mutatedGenes[index] = 1 - gene;
+        for (double g : individual.getGenes()) {
+            Double rand = r.nextDouble();
+            if (rand < mutationRate) {
+                if (individual.isOutputBit(index)) {
+                    mutatedGenes[index] = 1.0 - g;
                 } else {
-                    mutatedGenes[index] = inputMutation(gene);
+                    mutatedGenes[index] = individual.round(inputMutation(g));
                 }
             } else {
-                mutatedGenes[index] = gene;
+                mutatedGenes[index] = g;
             }
             index++;
         }
 
-        return new Individual(mutatedGenes, ruleLength, individual.getRuleCount());
+        return new Individual(mutatedGenes, individual.getRuleLength(), individual.getRuleCount());
     }
 
-    private int inputMutation(int gene) {
-        Double op = 0.5;
-        switch (gene) {
-            case 0:
-                return r.nextDouble() <= op ? 1 : 2;
-            case 1:
-                return r.nextDouble() <= op ? 0 : 2;
-            case 2:
-                return r.nextDouble() <= op ? 1 : 0;
+    private double inputMutation(double gene) {
+        Double result;
+        
+        if (r.nextInt(2) == 0) {
+            double m = getMutationAmount();
+            result = gene - m;
+        } else {
+            double m = getMutationAmount();
+            result = gene + m;
         }
-        return -1;
+
+        if (result > 1.0) {
+            result = 1.0;
+        } else if (result < 0.0) {
+            result = 0.0;
+        }
+
+        return result;
     }
 
     public Population singlePointCrossover(Population population) {
         Population mutatedPopulation = new Population(dataSet);
+        int rLength = population.getPopulation().get(0).getRuleLength();
 
         for (int i = 0; i < p; i++) {
             Individual parent1 = population.getIndividual(i);
             Individual parent2 = population.getIndividual(i + 1);
-            mutatedPopulation.getPopulation().addAll(performCrossover(r.nextInt(ruleCount * ruleLength), (ruleCount * ruleLength), parent1.getGenes(), parent2.getGenes()));
+            mutatedPopulation.getPopulation().addAll(performCrossover(r.nextInt(parent1.getGenes().length), parent1.getGenes(), parent2.getGenes(), rLength));
             i++;
         }
 
@@ -138,41 +151,25 @@ public class Helper {
         return mutatedPopulation;
     }
 
-    public Population multiPointCrossover(Population population) {
-        Population mutatedPopulation = new Population(dataSet);
-
-        for (int i = 0; i < p; i++) {
-            Individual parent1 = population.getIndividual(i);
-            Individual parent2 = population.getIndividual(i + 1);
-            mutatedPopulation.getPopulation().addAll(performCrossover(r.nextInt(ruleCount * ruleLength), -1, parent1.getGenes(), parent2.getGenes()));
-            i++;
-        }
-
-        mutatedPopulation.calculateTotalFitnessOfPopulation();
-        return mutatedPopulation;
-    }
-
-    public List<Individual> performCrossover(int crossoverPoint, int endCrossoverPoint, int genesP1[], int genesP2[]) {
-
-        if(endCrossoverPoint == -1) {
-            while (endCrossoverPoint < crossoverPoint) {
-                endCrossoverPoint = r.nextInt(ruleLength * ruleCount);
-            }
-        }
+    public List<Individual> performCrossover(int crossoverPoint, double genesP1[], double genesP2[], int rLength) {
         List<Individual> children = new ArrayList<>();
 
-        int[] child1Genes = genesP1;
-        int[] child2Genes = genesP2;
+        double[] child1Genes = genesP1;
+        double[] child2Genes = genesP2;
 
-        for (int i = crossoverPoint; i < endCrossoverPoint; i++) {
-            int tempGene = child1Genes[i];
+        for (int i = crossoverPoint + 1; i < child1Genes.length; i++) {
+            double tempGene = child1Genes[i];
             child1Genes[i] = child2Genes[i];
             child2Genes[i] = tempGene;
         }
 
-        children.add(new Individual(child1Genes, ruleLength, ruleCount));
-        children.add(new Individual(child2Genes, ruleLength, ruleCount));
+        children.add(new Individual(child1Genes, rLength, ruleCount));
+        children.add(new Individual(child2Genes, rLength, ruleCount));
         return children;
+    }
+
+    private double getMutationAmount() {
+        return 0 + (mutationAmount - 0) * r.nextDouble();
     }
 
     public int getP() {
@@ -185,5 +182,9 @@ public class Helper {
 
     public void setMutationRate(double mutationRate) {
         this.mutationRate = mutationRate;
+    }
+
+    public void setMutationAmount(double mutationAmount) {
+        this.mutationAmount = mutationAmount;
     }
 }
