@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import static simple.ga.SimpleGA.testSet;
 
 /**
  *
@@ -119,10 +120,13 @@ public class Population {
     }
 
     public List<String> printGeneration(int g) {
+        Individual best = getHighestFitnessIndividual().copy();
+        String bestTrainingFitness = String.valueOf(best.getFitness());
+        best.calculateFitness(testSet);
         String average = String.valueOf(getAverageFitness());
-        String best = String.valueOf(getHighestFitnessIndividual().getFitness());
-        System.out.println("Gen: " + g + " - Average: " + average + " - Best: " + best);
-        return Arrays.asList(String.valueOf(g), average, best);
+        String bestTestFitness = String.valueOf(best.getFitness());
+        System.out.println("Gen: " + g + " - Average: " + average + " - Best in Training: " + bestTrainingFitness + " - Best in Test: " + bestTestFitness);
+        return Arrays.asList(String.valueOf(g), average, bestTrainingFitness, bestTestFitness);
     }
 
     public Population copy() {

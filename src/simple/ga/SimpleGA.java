@@ -11,17 +11,18 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 /**
  *
  * @author c38-hughes
  */
 public class SimpleGA {
 
-    private static final String CSV_FILE_DIR = "res/csv_results/data3/";
+    private static final String CSV_FILE_DIR = "res/csv_results/data3/splitDataSet/";
 
     private static final String FILE_NAME = "res/data3.txt";
 
-    private static final int GENS = 100;
+    private static final int GENS = 1000;
 
     private static int ruleLength;
 
@@ -29,11 +30,13 @@ public class SimpleGA {
 
     private static final int P = 100;
 
-    private static final double MUTATE_AMOUNT = 0.5;
+    private static final double MUTATE_AMOUNT = 0.6;
 
     private static double mutateRate;
 
-    private static List<Rule> dataSet;
+    private static List<Rule> trainingSet;
+
+    public static List<Rule> testSet;
 
     private static Individual best;
 
@@ -48,11 +51,11 @@ public class SimpleGA {
      * @throws java.io.IOException
      */
     public static void main(String[] args) throws IOException {
-        int generation = 0;
-        List<List<String>> csvData = new ArrayList<>();
-        csvData.add(Arrays.asList("Generation", "Average Fitness", "Best Fitness"));
         helper = new Helper(P, RULE_COUNT, ruleLength);
-        dataSet = helper.getIndividualFromFile(FILE_NAME);
+        List<Rule> tempList = helper.getIndividualFromFile(FILE_NAME);
+        trainingSet = tempList.subList(0, 1000);
+        testSet = tempList.subList(1000, tempList.size());
+        helper.setDataSet(trainingSet);
 
         ruleLength = helper.getRuleLength();
         ruleLength = (ruleLength - 1) * 2;
@@ -60,25 +63,32 @@ public class SimpleGA {
         mutateRate = 1.5f / (ruleLength * RULE_COUNT);
         helper.setMutationRate(mutateRate);
         helper.setMutationAmount(MUTATE_AMOUNT);
-        population = new Population(P, RULE_COUNT, ruleLength, dataSet);
 
-        csvData.add(population.printGeneration(generation));
-        while (generation != GENS) {
-            generation++;
-            best = population.getHighestFitnessIndividual();
-            offspring = helper.tournamentSelection(population);
-            offspring = helper.singlePointCrossover(offspring);
-            offspring = helper.bitwiseMutation(offspring);
-            population = offspring.copy();
-            population.replaceWorstIndividual(best);
+        for (int i = 1; i <= 30; i++) {
+            int generation = 0;
+            List<List<String>> csvData = new ArrayList<>();
+            csvData.add(Arrays.asList("Generation", "Average Fitness", "Best Fitness Training", "Fitness of best on testSet"));
+            population = new Population(P, RULE_COUNT, ruleLength, trainingSet);
+
             csvData.add(population.printGeneration(generation));
-            offspring = new Population(dataSet);
-            w.flush();
+            while (generation != GENS) {
+                generation++;
+                best = population.getHighestFitnessIndividual();
+                offspring = helper.tournamentSelection(population);
+                offspring = helper.singlePointCrossover(offspring);
+                offspring = helper.bitwiseMutation(offspring);
+                population = offspring.copy();
+                population.replaceWorstIndividual(best);
+                csvData.add(population.printGeneration(generation));
+                offspring = new Population(trainingSet);
+            }
+            population.printIndividual(null);
+            String b = String.valueOf(population.getHighestFitnessIndividual().getFitness());
+            String fileName = GENS + "-" + P + "-" + RULE_COUNT + "-" + mutateRate + "-" + MUTATE_AMOUNT + "-" + b + "-" + i + ".csv";
+            Writer w = new FileWriter(CSV_FILE_DIR + fileName);
+            CSVUtils.writeLines(w, csvData);
+            w.close();
         }
-        population.printIndividual(null);
-        String fileName = GENS + "-" + P + "-" + RULE_COUNT + "-" + mutateRate + "-" + b + "-" + 1 + ".csv";
-        Writer w = new FileWriter(CSV_FILE_DIR + fileName);
-        CSVUtils.writeLines(w, csvData);
     }
 
 }

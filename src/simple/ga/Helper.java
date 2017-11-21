@@ -187,4 +187,8 @@ public class Helper {
     public void setMutationAmount(double mutationAmount) {
         this.mutationAmount = mutationAmount;
     }
+    
+    public void setDataSet(List<Rule> dataSet) {
+        this.dataSet = dataSet;
+    }
 }
