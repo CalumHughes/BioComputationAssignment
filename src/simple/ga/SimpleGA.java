@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class SimpleGA {
 
-    private static final String CSV_FILE_DIR = "res/csv_results/data3/splitDataSet/";
+    private static final String CSV_FILE_DIR = "res/csv_results/";
 
     private static final String FILE_NAME = "res/data3.txt";
 
@@ -64,31 +64,27 @@ public class SimpleGA {
         helper.setMutationRate(mutateRate);
         helper.setMutationAmount(MUTATE_AMOUNT);
 
-        for (int i = 1; i <= 30; i++) {
-            int generation = 0;
-            List<List<String>> csvData = new ArrayList<>();
-            csvData.add(Arrays.asList("Generation", "Average Fitness", "Best Fitness Training", "Fitness of best on testSet"));
-            population = new Population(P, RULE_COUNT, ruleLength, trainingSet);
+        int generation = 0;
+        List<List<String>> csvData = new ArrayList<>();
+        csvData.add(Arrays.asList("Generation", "Average Fitness", "Best Fitness Training", "Fitness of best on testSet"));
+        population = new Population(P, RULE_COUNT, ruleLength, trainingSet);
 
+        csvData.add(population.printGeneration(generation));
+        while (generation != GENS) {
+            generation++;
+            best = population.getHighestFitnessIndividual();
+            offspring = helper.tournamentSelection(population);
+            offspring = helper.singlePointCrossover(offspring);
+            offspring = helper.bitwiseMutation(offspring);
+            population = offspring.copy();
+            population.replaceWorstIndividual(best);
             csvData.add(population.printGeneration(generation));
-            while (generation != GENS) {
-                generation++;
-                best = population.getHighestFitnessIndividual();
-                offspring = helper.tournamentSelection(population);
-                offspring = helper.singlePointCrossover(offspring);
-                offspring = helper.bitwiseMutation(offspring);
-                population = offspring.copy();
-                population.replaceWorstIndividual(best);
-                csvData.add(population.printGeneration(generation));
-                offspring = new Population(trainingSet);
-            }
-            population.printIndividual(null);
-            String b = String.valueOf(population.getHighestFitnessIndividual().getFitness());
-            String fileName = GENS + "-" + P + "-" + RULE_COUNT + "-" + mutateRate + "-" + MUTATE_AMOUNT + "-" + b + "-" + i + ".csv";
-            Writer w = new FileWriter(CSV_FILE_DIR + fileName);
-            CSVUtils.writeLines(w, csvData);
-            w.close();
+            offspring = new Population(trainingSet);
         }
+        population.printIndividual(null);
+        String b = String.valueOf(population.getHighestFitnessIndividual().getFitness());
+        String fileName = GENS + "-" + P + "-" + RULE_COUNT + "-" + mutateRate + "-" + MUTATE_AMOUNT + "-" + b + ".csv";
+        Writer w = new FileWriter(CSV_FILE_DIR + fileName);
+        CSVUtils.writeLines(w, csvData);
     }
-
 }
