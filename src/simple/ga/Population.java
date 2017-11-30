@@ -17,7 +17,7 @@ public class Population {
 
     private List<Individual> population;
 
-    private int averageFitness;
+    private double averageFitness;
 
     private Individual dataSet;
 
@@ -31,23 +31,23 @@ public class Population {
         this.population = population;
     }
 
-    public Population(int p, int ruleCount, int ruleLength, Individual dataSet) {
+    public Population(int p, int ruleCount, int ruleLength, Individual dataSet, boolean useGeneralization) {
         this.dataSet = dataSet;
         this.population = new ArrayList<>();
 
         for (int i = 0; i < p; i++) {
-            Individual newIndividual = new Individual(ruleCount, ruleLength);
+            Individual newIndividual = new Individual(ruleCount, ruleLength, useGeneralization);
             newIndividual.calculateFitness(dataSet);
             population.add(newIndividual);
         }
     }
-    
+
     public void printBest() {
         Individual i = getHighestFitnessIndividual();
         int ruleLength = i.getRuleLength();
         System.out.println();
         System.out.println("Fitness: " + i.getFitness());
-        for(String s : i.getRuleList()) {
+        for (String s : i.getRuleList()) {
             System.out.println(s.substring(0, ruleLength - 1) + " " + s.substring(ruleLength - 1));
         }
     }
@@ -91,13 +91,12 @@ public class Population {
 
     public double getAverageFitness() {
         int average = 0;
-
         for (Individual i : population) {
             i.calculateFitness(dataSet);
             average += i.getFitness();
         }
 
-        averageFitness = average / population.size();
+        averageFitness =  (double)average / population.size();
 
         return averageFitness;
     }
@@ -147,7 +146,7 @@ public class Population {
     @Override
     public String toString() {
         String s = "";
-        for(Individual i : population) {
+        for (Individual i : population) {
             s += i.getFitness() + " - ";
         }
         return s;

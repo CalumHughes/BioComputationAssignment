@@ -24,12 +24,14 @@ public class Helper {
     private double mutationRate;
     private Individual dataSet;
     private Random r;
+    private boolean generalize;
 
-    public Helper(int p, int ruleCount, int ruleLength) {
+    public Helper(int p, int ruleCount, int ruleLength, boolean generalize) {
         this.p = p;
         this.ruleCount = ruleCount;
         this.ruleLength = ruleLength;
         r = new Random();
+        this.generalize = generalize;
     }
 
     public Individual getIndividualFromFile(String fileName) {
@@ -97,7 +99,7 @@ public class Helper {
             Double d = r.nextDouble();
             int gene = individual.getGenes()[i];
             if (d < mutationRate) {
-                if (individual.isOutputBit(i)) {
+                if (!generalize ^ individual.isOutputBit(i)) {
                     mutatedGenes[index] = 1 - gene;
                 } else {
                     mutatedGenes[index] = inputMutation(gene);

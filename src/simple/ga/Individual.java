@@ -26,13 +26,16 @@ public class Individual {
 
     private int fitness;
 
-    public Individual(int ruleCount, int ruleLength) {
+    public Individual(int ruleCount, int ruleLength, boolean useGeneralization) {
         this.ruleCount = ruleCount;
         this.ruleLength = ruleLength;
         genes = new int[ruleCount * ruleLength];
 
         for (int i = 0; i < genes.length; i++) {
             int maxRand = isOutputBit(i) ? 2 : 3;
+            if(!useGeneralization) {
+                maxRand = 2;
+            }
             int randValue = r.nextInt(maxRand);
             genes[i] = randValue;
         }
